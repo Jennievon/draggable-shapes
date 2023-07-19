@@ -1,5 +1,3 @@
-Certainly! Here's an example README file for a Next.js project:
-
 # Draggable Boxes - Next.js
 
 This project demonstrates draggable boxes in a Next.js application. Users can interact with blue boxes by dragging them around the screen and dropping them into different positions. The red box represents the target area, and the total visible area within the red box is calculated based on the positioning of the blue boxes.
