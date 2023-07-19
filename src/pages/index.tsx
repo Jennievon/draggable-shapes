@@ -1,14 +1,14 @@
 import { Inter } from "next/font/google";
 import React from "react";
-import DraggableBoxes from "../components/DraggableBoxes";
+import DraggableShapes from "../components/DraggableShapes";
 
 const inter = Inter({ subsets: ["latin"] });
 
 const Home = () => {
   return (
-    <div>
-      <h1>Draggable Boxes</h1>
-      <DraggableBoxes />
+    <div className="container">
+      <h1>Draggable Shapes</h1>
+      <DraggableShapes />
     </div>
   );
 };
