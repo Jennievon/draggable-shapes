@@ -1,12 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShapePosition } from "../types";
 
-const useDraggableShapes = ({
-  initialTotalArea = 0,
-}: {
-  initialTotalArea?: number;
-}) => {
-  const [totalArea, setTotalArea] = useState(initialTotalArea);
+const useDraggableShapes = () => {
   const [shapesPosition, setShapesPosition] = useState<ShapePosition>({});
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
@@ -33,7 +28,6 @@ const useDraggableShapes = ({
         ...shapesPosition,
         [draggedElement.id]: { x: newX, y: newY },
       });
-      setTotalArea(totalArea + draggedRect.width * draggedRect.height);
     } else {
       alert("Dragged element not found");
     }
@@ -54,7 +48,6 @@ const useDraggableShapes = ({
     handleDrop,
     handleDragOver,
     resetShapes,
-    totalArea,
   };
 };
 
