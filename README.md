@@ -21,13 +21,13 @@ To run the project locally, follow these steps:
 3. Install the dependencies:
 
    ```shell
-   npm install
+   yarn install
    ```
 
 4. Start the development server:
 
    ```shell
-   npm run dev
+   yarn dev
    ```
 
 5. Open your web browser and visit [http://localhost:3000](http://localhost:3000) to see the application.
