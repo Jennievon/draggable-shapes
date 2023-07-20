@@ -28,6 +28,7 @@ const Shape: React.FC<ShapeProps> = ({
   return (
     <div
       id={id}
+      data-testid={id}
       className={className}
       style={style as React.CSSProperties}
       draggable

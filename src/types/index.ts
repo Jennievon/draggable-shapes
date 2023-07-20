@@ -12,6 +12,14 @@ export interface Coordinates {
   y: number;
 }
 
+export interface Shape {
+  r?: number;
+  x1?: number;
+  y1?: number;
+  x2?: number;
+  y2?: number;
+}
+
 export interface ShapeProps {
   id: string;
   shapeType: ShapeType;
