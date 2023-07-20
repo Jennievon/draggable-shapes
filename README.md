@@ -49,5 +49,3 @@ To run the project locally, follow these steps:
 - The codebase is structured in a modular manner, with separate files for components, hooks, and types.
 - The project leverages the features and benefits of Next.js, such as server-side rendering and automatic code splitting.
 - The project can be customized and extended further to meet specific requirements.
-
-Feel free to explore the codebase, make modifications, and adapt it to your needs!
