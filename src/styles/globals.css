@@ -43,18 +43,25 @@ a {
   grid-gap: 10px;
 }
 
-.blue-box,
-.blue-circle {
+.box,
+.circle {
   width: 50px;
   height: 50px;
   background-color: blue;
   margin: 5px;
   cursor: grab;
-  z-index: 1;
 }
 
-.blue-circle {
+.circle {
   border-radius: 50%;
+}
+
+.blue {
+  background-color: blue;
+}
+
+.yellow {
+  background-color: yellow;
 }
 
 #red-box {
@@ -62,6 +69,7 @@ a {
   height: 300px;
   background-color: red;
   position: relative;
+  z-index: -1;
 }
 
 #total-area-label {

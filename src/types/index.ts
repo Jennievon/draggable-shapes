@@ -24,6 +24,5 @@ export interface ShapeProps {
   id: string;
   shapeType: ShapeType;
   position?: Coordinates;
-  onDragStart: React.DragEventHandler<HTMLDivElement>;
-  onDragEnd: React.DragEventHandler<HTMLDivElement>;
+  isOverlappingTarget: (coords: any) => boolean;
 }

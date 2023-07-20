@@ -4332,6 +4332,11 @@ url-parse@^1.5.3:
     querystringify "^2.1.1"
     requires-port "^1.0.0"
 
+use-draggable@^1.5.2:
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/use-draggable/-/use-draggable-1.5.2.tgz#ddcc928f6d03826eacffdb75ca89a9a85e9d9b98"
+  integrity sha512-irXfw3KXxaSEHxMQR1XWwhEaObxg0XPYxtRMOLiLizLqDnOJ2GacfhkhNO8DdsUK+Pf9+r4U5hlNW64ya5qYcg==
+
 v8-to-istanbul@^9.0.1:
   version "9.1.0"
   resolved "https://registry.yarnpkg.com/v8-to-istanbul/-/v8-to-istanbul-9.1.0.tgz#1b83ed4e397f58c85c266a570fc2558b5feb9265"

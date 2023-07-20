@@ -1,40 +1,36 @@
-import React from "react";
+import React, { useState } from "react";
 import { Coordinates, ShapeProps } from "../types";
-
-const getShapeStyle = (id: string, position?: Coordinates) => {
-  if (position) {
-    return {
-      position: "absolute",
-      left: `${position.x}px`,
-      top: `${position.y}px`,
-    };
-  } else {
-    return {
-      position: "relative",
-    };
-  }
-};
+import { useDraggable } from "use-draggable";
 
 const Shape: React.FC<ShapeProps> = ({
   id,
   shapeType,
-  position,
-  onDragStart,
-  onDragEnd,
+  isOverlappingTarget,
 }) => {
-  const className = `blue-${shapeType}`;
-  const style = getShapeStyle(id, position);
+  const { targetRef, handleRef } = useDraggable({ controlStyle: true });
+
+  if (targetRef.current) {
+    console.log(
+      "The box coords are: ",
+      targetRef.current.getBoundingClientRect()
+    );
+    console.log(
+      "The box coords are: ",
+      targetRef.current.getBoundingClientRect()
+    );
+  }
 
   return (
-    <div
-      id={id}
-      data-testid={id}
-      className={className}
-      style={style as React.CSSProperties}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-    />
+    <div id={id} ref={targetRef} data-testid={id}>
+      <div
+        ref={handleRef}
+        className={`${
+          isOverlappingTarget(targetRef.current?.getBoundingClientRect())
+            ? "yellow"
+            : "blue"
+        } ${shapeType}`}
+      />
+    </div>
   );
 };
 
