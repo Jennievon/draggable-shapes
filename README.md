@@ -35,17 +35,18 @@ To run the project locally, follow these steps:
 ## Usage
 
 - Select the shape type (Boxes or Circles) using the dropdown menu.
-- Drag the blue boxes around the screen to change their positions.
-- Drop the blue boxes into different locations, including on top of the red box.
+- Drag the blue shapes around the screen to change their positions.
+- Drop the blue shapes into different locations, including on top of the red box.
 - The total visible area within the red box is displayed below it.
 
-## Additional Notes
+## Implementation Details
 
 - This project is built with Next.js, a React framework for server-side rendering and static site generation.
 - The application uses TypeScript for type checking and improved developer experience.
-- HTML drag and drop attributes (draggable, ondragstart, ondragend, ondragover, ondrop) are used for implementing drag and drop functionality.
-- Intersection Observer API is used to calculate the visible area of the red box based on the overlapping blue boxes.
-- The project includes reusable components such as `Shape` and a custom hook `useDraggableShapes` for managing the drag and drop behaviour.
+- HTML drag and drop attributes (draggable, onDragStart, onDragEnd, onDragOver, onDrop) are used for implementing drag and drop functionality.
+- The draggable shapes are implemented using the `Shape` component, which handles the drag and drop behavior.
+- The total visible area of the red box is calculated using the custom hook `useDraggableShapes`. This hook tracks the positions of the draggable shapes and updates the total visible area whenever a shape is moved or dropped.
 - The codebase is structured in a modular manner, with separate files for components, hooks, and types.
-- The project leverages the features and benefits of Next.js, such as server-side rendering and automatic code splitting.
 - The project can be customized and extended further to meet specific requirements.
+
+Feel free to explore and interact with the draggable shapes in the application! 
