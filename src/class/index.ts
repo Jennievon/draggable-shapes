@@ -1,4 +1,4 @@
-import { Coordinates } from "@/types";
+import { Coordinates, SHAPE_ID } from "@/types";
 
 interface PixelCache {
   [key: string]: Record<string, boolean>;
@@ -34,13 +34,14 @@ export class Box implements Shape {
     return boxes
       .map(
         (_, index) =>
-          document.querySelector(`#blue-shape${index + 1}`) as HTMLDivElement
+          document.querySelector(`#${SHAPE_ID}${index + 1}`) as HTMLDivElement
       )
       .filter((e) => e)
       .map((el) => {
-        return new Box(el.offsetHeight, {
-          x: el.offsetLeft,
-          y: el.offsetTop,
+        const rect = el.getBoundingClientRect();
+        return new Box(rect.height, {
+          x: rect.x,
+          y: rect.y,
         });
       });
   }
@@ -68,13 +69,14 @@ export class Circle implements Shape {
     return shapes
       .map(
         (_, index) =>
-          document.querySelector(`#blue-shape${index + 1}`) as HTMLDivElement
+          document.querySelector(`#${SHAPE_ID}${index + 1}`) as HTMLDivElement
       )
       .filter((e) => e)
       .map((el) => {
-        return new Circle(el.offsetHeight, {
-          x: el.offsetLeft,
-          y: el.offsetTop,
+        const rect = el.getBoundingClientRect();
+        return new Circle(rect.height, {
+          x: rect.x,
+          y: rect.y,
         });
       });
   }
@@ -108,11 +110,11 @@ export class Circle implements Shape {
     }
 
     // Return all the pixels in the circle
-    return pixels.reduce((acc, curr) => {
-      if (!acc[`${curr.x},${curr.y}`]) {
-        acc[`${curr.x},${curr.y}`] = true;
+    return pixels.reduce((accumulator, current) => {
+      if (!accumulator[`${current.x},${current.y}`]) {
+        accumulator[`${current.x},${current.y}`] = true;
       }
-      return acc;
+      return accumulator;
     }, {});
   }
 }
@@ -127,13 +129,4 @@ export function getShapes(shapeType: string, shapes: number[]) {
   } else {
     return Circle.getCircles(shapes);
   }
-}
-
-export function isOverlapping(rect1: DOMRect, rect2: DOMRect) {
-  return !(
-    rect1.right < rect2.left ||
-    rect1.left > rect2.right ||
-    rect1.bottom < rect2.top ||
-    rect1.top > rect2.bottom
-  );
 }

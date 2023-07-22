@@ -1,102 +1,72 @@
-import { useState, useEffect, useRef } from "react";
-import { Coordinates, ShapePosition, ShapeType } from "../types";
-import { isPointInsideShape, isOverlapping, getShapes } from "@/class";
+import React, { useState, useEffect, useRef } from "react";
+import { Coordinates, SHAPE_COUNT, ShapeData, ShapeType } from "../types";
+import { isPointInsideShape, getShapes } from "@/class";
+import { debounce } from "lodash";
 
 const shapeCache = new Set<string>();
 const hash = (point: Coordinates) => `cache-${point.x}-${point.y}`;
 
-const useDraggableShapes = () => {
-  const [shapesPosition, setShapesPosition] = useState<ShapePosition>({});
+const useDraggableShapes = ({
+  redBoxRef,
+}: {
+  redBoxRef: React.RefObject<HTMLDivElement>;
+}) => {
   const [totalArea, setTotalArea] = useState(0);
   const [visibleArea, setVisibleArea] = useState(0);
-  const [draggedRect, setDraggedRect] = useState<DOMRect | null>(null);
-  const shapeRef = useRef<number[]>([...Array(4)]).current;
   const [shapeType, setShapeType] = useState<ShapeType>(ShapeType.BOX);
 
-  // Handle the change of the shape type
-  const handleShapeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    e.preventDefault();
-    setShapeType(e.target.value as ShapeType);
-  };
+  const redBox = redBoxRef.current;
+  const redBoxCoords = redBox?.getBoundingClientRect();
 
-  // Handle the drag start event
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-    e.dataTransfer.setData("text/plain", e.currentTarget.id);
-    e.currentTarget.style.cursor = "grabbing";
-  };
+  const shapeRef = useRef<number[]>([...Array(SHAPE_COUNT)]).current;
+  const [shapes, setShapes] = React.useState<ShapeData[]>(() =>
+    Array.from(new Array(SHAPE_COUNT)).map((_, i) => ({
+      index: i + 1,
+      coords: { x: 0, y: 0, width: 0, height: 0 },
+      visible: false,
+    }))
+  );
 
-  // Handle the drag end event
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    e.currentTarget.style.cursor = "grab";
-  };
+  const isOverlappingTarget = React.useCallback(
+    (coords: any) => {
+      if (!coords || !redBoxCoords) return false;
 
-  // Handle the drop event
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const data = e.dataTransfer.getData("text/plain");
-    const draggedElement = document.getElementById(data) as HTMLDivElement;
+      const redBoxCoordsX = [redBoxCoords.left, redBoxCoords.right];
+      const redBoxCoordsY = [redBoxCoords.top, redBoxCoords.bottom];
+      setTotalArea(redBoxCoords.width * redBoxCoords.height);
 
-    if (!draggedElement) {
-      console.log("Dragged element not found");
-      return;
-    }
+      const shapeCoordsX = [coords.x, coords.x + coords.width];
+      const shapeCoordsY = [coords.y, coords.y + coords.height];
 
-    const draggedRect = draggedElement.getBoundingClientRect();
-    setDraggedRect(draggedRect);
+      const xOverlap =
+        redBoxCoordsX[0] < shapeCoordsX[1] &&
+        redBoxCoordsX[1] > shapeCoordsX[0];
 
-    // Calculate the new position of the dragged element
-    const newX = e.clientX - draggedRect.width / 2;
-    const newY = e.clientY - draggedRect.height / 2;
+      const yOverlap =
+        redBoxCoordsY[0] < shapeCoordsY[1] &&
+        redBoxCoordsY[1] > shapeCoordsY[0];
 
-    // Update the position of the dragged element
-    setShapesPosition((prevPositions) => ({
-      ...prevPositions,
-      [draggedElement.id]: {
-        x: newX,
-        y: newY,
-      },
-    }));
-  };
+      return xOverlap && yOverlap;
+    },
+    [redBoxCoords]
+  );
 
-  // Reset the shapes position to the initial state
-  const resetShapes = () => {
-    setShapesPosition({});
-  };
-
-  // Handle the drag over event
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
+  // const isOverlappingTarget = React.useRef(
+  //   debounce(debouncedIsOverlappingTarget, 300)
+  // );
 
   useEffect(() => {
-    const redBox = document.getElementById("red-box") as HTMLDivElement;
-
+    const redBox = redBoxRef.current;
     shapeCache.clear();
 
-    // Calculate the total area of the red box
-    const redBoxRect = redBox.getBoundingClientRect();
-    const totalArea = redBoxRect.width * redBoxRect.height;
-    setTotalArea(totalArea);
-
-    if (!redBox || !draggedRect) {
-      return;
-    }
-
-    // check if the dragged element is inside the red box before calculating the hidden area
-    if (!isOverlapping(draggedRect, redBox.getBoundingClientRect())) {
+    if (!redBox) {
       return;
     }
 
     const redBoxTop = redBox.offsetTop;
     const redBoxLeft = redBox.offsetLeft;
 
-    const getHiddenArea = (
-      size: number,
-      startPoint: {
-        x: number;
-        y: number;
-      }
-    ) => {
+    const getHiddenArea = (size: number, startPoint: Coordinates) => {
       let hiddenPixels = 0;
       let position = { ...startPoint };
       let initialXState = position.x;
@@ -109,7 +79,9 @@ const useDraggableShapes = () => {
           position.x += 1;
 
           for (let shape of blueShapes) {
-            if (shapeCache.has(hash(position))) continue;
+            if (shapeCache.has(hash(position))) {
+              continue;
+            }
 
             if (isPointInsideShape(position, shape)) {
               shapeCache.add(hash(position));
@@ -132,20 +104,16 @@ const useDraggableShapes = () => {
     });
 
     setVisibleArea(totalArea - hiddenArea);
-  }, [shapesPosition, draggedRect, shapeRef, shapeType]);
+  }, [shapeType, totalArea, shapeRef, redBoxRef]);
 
   return {
-    shapesPosition,
-    handleDragStart,
-    handleDragEnd,
-    handleDrop,
-    handleDragOver,
-    resetShapes,
     totalArea,
     visibleArea,
-    shapeRef,
-    handleShapeChange,
     shapeType,
+    setShapeType,
+    isOverlappingTarget,
+    shapes,
+    setShapes,
   };
 };
 
