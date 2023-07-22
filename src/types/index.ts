@@ -10,6 +10,12 @@ export interface ShapePosition {
 export interface Coordinates {
   x: number;
   y: number;
+  width: number;
+  height: number;
+  bottom?: number;
+  left?: number;
+  right?: number;
+  top?: number;
 }
 
 export interface Shape {
@@ -20,9 +26,18 @@ export interface Shape {
   y2?: number;
 }
 
+export interface ShapeData {
+  id?: string;
+  index: number;
+  coords: Coordinates; // Replace Coordinates with the actual type for shape coordinates
+  visible?: boolean;
+}
+
 export interface ShapeProps {
   id: string;
   shapeType: ShapeType;
   position?: Coordinates;
   isOverlappingTarget: (coords: any) => boolean;
+  shapes: ShapeData[];
+  setShapes: (shapes: ShapeData[]) => void;
 }

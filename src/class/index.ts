@@ -5,93 +5,71 @@ interface PixelCache {
 }
 
 // Base Shape interface
-interface Shape {
-  isPointInside(pos: Coordinates): boolean;
+interface IShape {
+  getPixels(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): Record<string, boolean>;
+  getCoordinates(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): Coordinates;
 }
 
-const pixelsInCircles: PixelCache = {};
-
-export class Box implements Shape {
-  private x1: number;
-  private y1: number;
-  private x2: number;
-  private y2: number;
-
-  constructor(size: number, startPoint: Coordinates) {
-    this.x1 = startPoint.x;
-    this.y1 = startPoint.y;
-    this.x2 = startPoint.x + size;
-    this.y2 = startPoint.y + size;
+class Box {
+  getPixels(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): Record<string, boolean> {
+    const hashMap = {} as Record<string, boolean>;
+    for (let b = 0; b < height; b++) {
+      for (let a = 0; a < width; a++) {
+        hashMap[`${x + a},${y + b}`] = true;
+      }
+    }
+    return hashMap;
   }
-
-  isPointInside(pos: Coordinates) {
-    return (
-      pos.x >= this.x1 && pos.x < this.x2 && pos.y >= this.y1 && pos.y < this.y2
-    );
-  }
-
-  static getBoxes(boxes: number[]) {
-    return boxes
-      .map(
-        (_, index) =>
-          document.querySelector(`#blue-shape${index + 1}`) as HTMLDivElement
-      )
-      .filter((e) => e)
-      .map((el) => {
-        return new Box(el.offsetHeight, {
-          x: el.offsetLeft,
-          y: el.offsetTop,
-        });
-      });
+  getCoordinates(x: number, y: number, width: number, height: number) {
+    return { x, y, width, height };
   }
 }
 
-export class Circle implements Shape {
-  private centerX: number;
-  private centerY: number;
-  private radius: number;
-
-  constructor(size: number, startPoint: Coordinates) {
-    this.centerX = startPoint.x + size / 2;
-    this.centerY = startPoint.y + size / 2;
-    this.radius = size / 2;
+class Circle {
+  getPixels(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): Record<string, boolean> {
+    const hashMap = {} as Record<string, boolean>;
+    return this._getPixelsInCircle(x, y, width / 2);
   }
 
-  isPointInside(pos: Coordinates) {
-    const distance = Math.sqrt(
-      (pos.x - this.centerX) ** 2 + (pos.y - this.centerY) ** 2
-    );
-    return distance <= this.radius;
+  getCoordinates(x: number, y: number, width: number, height: number) {
+    return {
+      x: x - width / 2,
+      y: y - width / 2,
+      width,
+      height,
+    };
   }
 
-  static getCircles(shapes: number[]) {
-    return shapes
-      .map(
-        (_, index) =>
-          document.querySelector(`#blue-shape${index + 1}`) as HTMLDivElement
-      )
-      .filter((e) => e)
-      .map((el) => {
-        return new Circle(el.offsetHeight, {
-          x: el.offsetLeft,
-          y: el.offsetTop,
-        });
-      });
-  }
-
-  static getPixelsInCircle(centerX: number, centerY: number, radius: number) {
+  _getPixelsInCircle(centerX: number, centerY: number, radius: number) {
     const key = `${centerX}-${centerY}-${radius}`;
     if (!pixelsInCircles[key]) {
-      pixelsInCircles[key] = Circle.calculatePixels(centerX, centerY, radius);
+      pixelsInCircles[key] = this._calculatePixels(centerX, centerY, radius);
     }
+    console.log("🚀 ~ file: index.ts:98 ~ pixelsInCircles:", pixelsInCircles);
     return pixelsInCircles[key];
   }
 
-  private static calculatePixels(
-    centerX: number,
-    centerY: number,
-    radius: number
-  ) {
+  _calculatePixels(centerX: number, centerY: number, radius: number) {
     const pixels = [] as Record<string, any>[];
 
     // Loop through all the pixels in the circle
@@ -108,32 +86,42 @@ export class Circle implements Shape {
     }
 
     // Return all the pixels in the circle
-    return pixels.reduce((acc, curr) => {
-      if (!acc[`${curr.x},${curr.y}`]) {
-        acc[`${curr.x},${curr.y}`] = true;
+    return pixels.reduce((accumulator, current) => {
+      if (!accumulator[`${current.x},${current.y}`]) {
+        accumulator[`${current.x},${current.y}`] = true;
       }
-      return acc;
+      return accumulator;
     }, {});
   }
 }
 
-export function isPointInsideShape(pos: Coordinates, shape: Shape) {
-  return shape.isPointInside(pos);
-}
+const pixelsInCircles: PixelCache = {};
+export class Shapes {
+  shapeType: string;
+  shape: IShape;
 
-export function getShapes(shapeType: string, shapes: number[]) {
-  if (shapeType === "box") {
-    return Box.getBoxes(shapes);
-  } else {
-    return Circle.getCircles(shapes);
+  constructor(shapeType: string) {
+    this.shapeType = shapeType;
+    if (shapeType === "circle") {
+      this.shape = new Circle();
+    }
+    this.shape = new Box();
   }
-}
 
-export function isOverlapping(rect1: DOMRect, rect2: DOMRect) {
-  return !(
-    rect1.right < rect2.left ||
-    rect1.left > rect2.right ||
-    rect1.bottom < rect2.top ||
-    rect1.top > rect2.bottom
-  );
+  static getCoordinates(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): Coordinates {
+    return this.getCoordinates(x, y, width, height);
+  }
+  getPixelsInShapes(
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): Record<string, boolean> {
+    return this.shape.getPixels(x, y, width, height);
+  }
 }

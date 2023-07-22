@@ -1,101 +1,133 @@
 import React from "react";
 import Shape from "./Shape";
-import { Coordinates, ShapeType } from "../types";
+import { Coordinates, ShapeData, ShapeType } from "../types";
 import useDraggableShapes from "../hooks/useDraggableShapes";
-import { getShapes, isPointInsideShape } from "@/class";
-
-const shapeCache = new Set<string>();
-const hash = (point: Coordinates) => `cache-${point.x}-${point.y}`;
+import { Shapes } from "@/class";
 
 const DraggableShapes = () => {
   const { shapeType, handleShapeChange } = useDraggableShapes();
 
-  const shapes = Array.from(new Array(4)).map((_, i) => ({ index: i + 1 }));
-  const [sequence, setSequence] = React.useState(1);
-  const redBoxRef = React.useRef<HTMLDivElement>(null);
+  const [shapes, setShapes] = React.useState<ShapeData[]>(() =>
+    Array.from(new Array(4)).map((_, i) => ({
+      index: i + 1,
+      coords: { x: 0, y: 0, width: 0, height: 0 },
+      visible: false,
+    }))
+  );
 
-  const redBoxCoords = redBoxRef.current?.getBoundingClientRect();
+  const redBoxRef = React.useRef<HTMLDivElement>(null);
+  const [sequence, setSequence] = React.useState(1);
+  const [visibleArea, setVisibleArea] = React.useState(0);
+
+  const redBox = redBoxRef.current;
+  const redBoxCoordsRealValues = redBox?.getBoundingClientRect();
+
+  const redBoxCoords = React.useMemo(() => {
+    if (!redBoxCoordsRealValues) return null;
+
+    return {
+      bottom: Math.floor(redBoxCoordsRealValues?.bottom),
+      left: Math.floor(redBoxCoordsRealValues?.left),
+      right: Math.floor(redBoxCoordsRealValues?.right),
+      top: Math.floor(redBoxCoordsRealValues?.top),
+      width: Math.floor(redBoxCoordsRealValues?.width),
+      height: Math.floor(redBoxCoordsRealValues?.height),
+      x: Math.floor(redBoxCoordsRealValues?.x),
+      y: Math.floor(redBoxCoordsRealValues?.y),
+    };
+  }, [redBoxCoordsRealValues]);
+
+  const redBoxMap = () => {
+    const hashMap: Record<string, boolean> = {};
+    if (!redBoxCoords) return hashMap;
+
+    for (let y = 0; y < redBoxCoords?.width; y++) {
+      for (let x = 0; x < redBoxCoords?.width; x++) {
+        hashMap[`${redBoxCoords?.left + x},${redBoxCoords?.top + y}`] = false;
+      }
+    }
+    return hashMap;
+  };
+
   const isOverlappingTarget = React.useCallback(
     (coords: any) => {
       if (!coords || !redBoxCoords) return false;
 
-      const redBoxCoordsX = [
-        redBoxCoords.x,
-        redBoxCoords.x + redBoxCoords.width,
-      ];
-      const redBoxCoordsY = [
-        redBoxCoords.y,
-        redBoxCoords.y + redBoxCoords.height,
-      ];
+      const redBoxCoordsX = [redBoxCoords.left, redBoxCoords.right];
+      const redBoxCoordsY = [redBoxCoords.top, redBoxCoords.bottom];
 
-      return (
-        coords.x + coords.width >= redBoxCoordsX[0] &&
-        coords.x <= redBoxCoordsX[1] &&
-        coords.y + coords.width >= redBoxCoordsY[0] &&
-        coords.y <= redBoxCoordsY[1]
-      );
+      const shapeCoordsX = [coords.x, coords.x + coords.width];
+      const shapeCoordsY = [coords.y, coords.y + coords.height];
+
+      const xOverlap =
+        redBoxCoordsX[0] < shapeCoordsX[1] &&
+        redBoxCoordsX[1] > shapeCoordsX[0];
+
+      const yOverlap =
+        redBoxCoordsY[0] < shapeCoordsY[1] &&
+        redBoxCoordsY[1] > shapeCoordsY[0];
+
+      return xOverlap && yOverlap;
     },
     [redBoxCoords]
   );
 
-  const [totalArea, setTotalArea] = React.useState(0);
-  const [visibleArea, setVisibleArea] = React.useState(0);
+  const redBoxPixelsMap = new Map<string, boolean>();
+  const hiddenPixelsMap = new Map<string, boolean>();
+
   React.useEffect(() => {
-    shapeCache.clear();
+    if (!redBoxCoords) return;
 
-    if (!redBoxCoords || !redBoxRef.current) {
-      return;
+    // Create a hashMap to keep track of all the pixels in the red box
+    const redBoxPixelsMap: Record<string, boolean> = {};
+
+    // Loop through the red box area and mark each pixel as visible
+    for (let y = 0; y < redBoxCoords.height; y++) {
+      for (let x = 0; x < redBoxCoords.width; x++) {
+        redBoxPixelsMap[`${redBoxCoords.left + x},${redBoxCoords.top + y}`] =
+          true;
+      }
     }
-    // Calculate the total area of the red box
-    const totalArea = redBoxCoords.width * redBoxCoords.height;
-    setTotalArea(totalArea);
 
-    const redBoxTop = redBoxRef.current.offsetTop;
-    const redBoxLeft = redBoxRef.current.offsetLeft;
+    // Create an instance of the Shapes class
+    const shapesHelper = new Shapes(shapeType);
 
-    const getHiddenArea = (
-      size: number,
-      startPoint: {
-        x: number;
-        y: number;
-      }
-    ) => {
-      let hiddenPixels = 0;
-      let position = { ...startPoint };
-      let initialXState = position.x;
+    // Loop through each shape and calculate its pixels
+    shapes.forEach(({ coords }) => {
+      if (!coords) return;
 
-      const blueShapes = getShapes(shapeType, shapeRef);
+      // Get the pixels for the current shape
+      const shapePixels = shapesHelper.getPixelsInShapes(
+        coords.x,
+        coords.y,
+        coords.width,
+        coords.height
+      );
 
-      console.time("before");
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          position.x += 1;
-
-          for (let shape of blueShapes) {
-            if (shapeCache.has(hash(position))) continue;
-
-            if (isPointInsideShape(position, shape)) {
-              shapeCache.add(hash(position));
-              hiddenPixels += 1;
-            }
-          }
+      // Check if the shape overlaps with any pixel in the red box
+      for (const pixel in shapePixels) {
+        if (redBoxPixelsMap[pixel]) {
+          console.log("pixel");
+          // If the pixel is in the red box, mark it as visible in the shapePixelsMap
+          redBoxPixelsMap[pixel] = false;
         }
-        position.y += 1;
-        position.x = initialXState;
       }
-      console.timeEnd("before");
-
-      console.log({ hiddenPixels });
-      return hiddenPixels;
-    };
-
-    const hiddenArea = getHiddenArea(redBox.offsetHeight, {
-      x: redBoxLeft,
-      y: redBoxTop,
     });
 
-    setVisibleArea(totalArea - hiddenArea);
-  }, [isOverlappingTarget, redBoxCoords, redBoxRef, shapeType]);
+    // Count the number of visible pixels in the red box
+    const visibleArea = Object.values(redBoxPixelsMap).filter(
+      (pixel) => !pixel
+    ).length;
+    console.log(
+      "🚀 ~ file: DraggableShapes.tsx:123 ~ React.useEffect ~ visibleArea:",
+      visibleArea
+    );
+
+    // Update the visibleArea state with the calculated value
+    setVisibleArea(visibleArea);
+  }, [shapes, redBoxCoords, shapeType]);
+
+  let totalArea = redBoxCoords?.width! * redBoxCoords?.height!;
 
   return (
     <div className="drag-area">
@@ -125,7 +157,14 @@ const DraggableShapes = () => {
                 id={id}
                 key={`blue-shape${sequence * index}`}
                 shapeType={shapeType}
-                isOverlappingTarget={isOverlappingTarget}
+                isOverlappingTarget={(coords) => {
+                  const shape = shapes.find(({ id }) => id === id);
+                  if (!shape) return false;
+                  shape.coords = coords;
+                  return isOverlappingTarget(coords);
+                }}
+                shapes={shapes}
+                setShapes={setShapes}
               />
             );
           })}
