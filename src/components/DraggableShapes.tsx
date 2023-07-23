@@ -15,11 +15,13 @@ const DraggableShapes = () => {
   } = useDraggableShapes({ redBoxRef });
 
   const [sequence, setSequence] = React.useState(1);
-  const totalArea = React.useMemo(() => {
-    if (!redBoxRef.current) return 0;
+  const [totalArea, setTotalArea] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!redBoxRef.current) return;
     const redBoxCoords = redBoxRef.current.getBoundingClientRect();
-    return redBoxCoords.width * redBoxCoords.height;
-  }, [redBoxRef]);
+    setTotalArea(redBoxCoords.width * redBoxCoords.height); // Update totalArea using setTotalArea
+  }, [redBoxRef.current]);
 
   const handleShapeChange = React.useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
