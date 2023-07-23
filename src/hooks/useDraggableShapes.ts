@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Coordinates, SHAPE_COUNT, ShapeData, ShapeType } from "../types";
-import { isPointInsideShape, getShapes } from "@/class";
+import { isPositionInShape, getShapes } from "@/class";
 import { debounce } from "lodash";
 
 const shapeCache = new Set<string>();
@@ -11,12 +11,10 @@ const useDraggableShapes = ({
 }: {
   redBoxRef: React.RefObject<HTMLDivElement>;
 }) => {
-  const [totalArea, setTotalArea] = useState(0);
-  const [visibleArea, setVisibleArea] = useState(0);
-  const [shapeType, setShapeType] = useState<ShapeType>(ShapeType.BOX);
-
   const redBox = redBoxRef.current;
   const redBoxCoords = redBox?.getBoundingClientRect();
+
+  const [shapeType, setShapeType] = useState<ShapeType>(ShapeType.BOX);
 
   const shapeRef = useRef<number[]>([...Array(SHAPE_COUNT)]).current;
   const [shapes, setShapes] = React.useState<ShapeData[]>(() =>
@@ -33,7 +31,6 @@ const useDraggableShapes = ({
 
       const redBoxCoordsX = [redBoxCoords.left, redBoxCoords.right];
       const redBoxCoordsY = [redBoxCoords.top, redBoxCoords.bottom];
-      setTotalArea(redBoxCoords.width * redBoxCoords.height);
 
       const shapeCoordsX = [coords.x, coords.x + coords.width];
       const shapeCoordsY = [coords.y, coords.y + coords.height];
@@ -51,18 +48,10 @@ const useDraggableShapes = ({
     [redBoxCoords]
   );
 
-  // const isOverlappingTarget = React.useRef(
-  //   debounce(debouncedIsOverlappingTarget, 300)
-  // );
+  shapeCache.clear();
+  let hiddenArea = 0;
 
-  useEffect(() => {
-    const redBox = redBoxRef.current;
-    shapeCache.clear();
-
-    if (!redBox) {
-      return;
-    }
-
+  if (redBox) {
     const redBoxTop = redBox.offsetTop;
     const redBoxLeft = redBox.offsetLeft;
 
@@ -73,7 +62,6 @@ const useDraggableShapes = ({
 
       const blueShapes = getShapes(shapeType, shapeRef);
 
-      console.time("before");
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
           position.x += 1;
@@ -83,7 +71,7 @@ const useDraggableShapes = ({
               continue;
             }
 
-            if (isPointInsideShape(position, shape)) {
+            if (isPositionInShape(position, shape)) {
               shapeCache.add(hash(position));
               hiddenPixels += 1;
             }
@@ -92,23 +80,18 @@ const useDraggableShapes = ({
         position.y += 1;
         position.x = initialXState;
       }
-      console.timeEnd("before");
 
-      console.log({ hiddenPixels });
       return hiddenPixels;
     };
 
-    const hiddenArea = getHiddenArea(redBox.offsetHeight, {
+    hiddenArea = getHiddenArea(redBox.offsetHeight, {
       x: redBoxLeft,
       y: redBoxTop,
     });
-
-    setVisibleArea(totalArea - hiddenArea);
-  }, [shapeType, totalArea, shapeRef, redBoxRef]);
+  }
 
   return {
-    totalArea,
-    visibleArea,
+    hiddenArea,
     shapeType,
     setShapeType,
     isOverlappingTarget,

@@ -24,9 +24,12 @@ export class Box implements Shape {
     this.y2 = startPoint.y + size;
   }
 
-  isPointInside(pos: Coordinates) {
+  isPointInside(position: Coordinates) {
     return (
-      pos.x >= this.x1 && pos.x < this.x2 && pos.y >= this.y1 && pos.y < this.y2
+      position.x >= this.x1 &&
+      position.x < this.x2 &&
+      position.y >= this.y1 &&
+      position.y < this.y2
     );
   }
 
@@ -119,7 +122,7 @@ export class Circle implements Shape {
   }
 }
 
-export function isPointInsideShape(pos: Coordinates, shape: Shape) {
+export function isPositionInShape(pos: Coordinates, shape: Shape) {
   return shape.isPointInside(pos);
 }
 

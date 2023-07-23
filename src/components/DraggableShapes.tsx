@@ -6,16 +6,20 @@ import useDraggableShapes from "../hooks/useDraggableShapes";
 const DraggableShapes = () => {
   const redBoxRef = React.useRef<HTMLDivElement>(null);
   const {
-    visibleArea,
+    hiddenArea,
     shapes,
     setShapes,
-    totalArea,
     shapeType,
     setShapeType,
     isOverlappingTarget,
   } = useDraggableShapes({ redBoxRef });
 
   const [sequence, setSequence] = React.useState(1);
+  const totalArea = React.useMemo(() => {
+    if (!redBoxRef.current) return 0;
+    const redBoxCoords = redBoxRef.current.getBoundingClientRect();
+    return redBoxCoords.width * redBoxCoords.height;
+  }, [redBoxRef]);
 
   const handleShapeChange = React.useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -50,6 +54,7 @@ const DraggableShapes = () => {
                 shapeType={shapeType}
                 shapes={shapes}
                 setShapes={setShapes}
+                redBoxCoords={redBoxRef.current?.getBoundingClientRect()}
                 isOverlappingTarget={isOverlappingTarget}
               />
             );
@@ -58,7 +63,7 @@ const DraggableShapes = () => {
         <div>
           <div id="red-box" ref={redBoxRef}></div>
           <p>Total Area: {totalArea} square pixels</p>
-          <p>Visible Area: {visibleArea} square pixels</p>
+          <p>Visible Area: {totalArea - hiddenArea} square pixels</p>
         </div>
       </div>
     </div>

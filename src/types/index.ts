@@ -43,5 +43,6 @@ export interface ShapeProps {
   shapeType: ShapeType;
   shapes: ShapeData[];
   setShapes: React.Dispatch<React.SetStateAction<ShapeData[]>>;
+  redBoxCoords: any;
   isOverlappingTarget: (coords: Coordinates) => boolean;
 }
